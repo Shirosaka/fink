@@ -7,7 +7,7 @@ use tracing::{debug, info};
 
 struct FinkBot {
     db: sqlx::PgPool,
-    prefix: &'static str,
+    prefix: String,
 }
 
 #[async_trait]
@@ -54,8 +54,10 @@ async fn main() -> Result<()> {
         .connect(std::env::var("DATABASE_URL")?.as_str())
         .await?;
 
+    let prefix = std::env::var("DISCORD_PREFIX").unwrap_or(String::from("!"));
+
     let bot = FinkBot {
-        prefix: "!",
+        prefix,
         db: database,
     };
 
