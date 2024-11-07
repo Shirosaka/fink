@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
 
     let database = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
-        .connect(std::env::var("DATABASE_URLK")?.as_str())
+        .connect(std::env::var("DATABASE_URL")?.as_str())
         .await?;
 
     let bot = FinkBot {
