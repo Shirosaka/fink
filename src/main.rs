@@ -12,6 +12,10 @@ struct FinkBot {
 
 #[async_trait]
 impl EventHandler for FinkBot {
+    async fn message(&self, ctx: Context, msg: Message) {
+        debug!("{}", msg.content);
+    }
+
     async fn ready(&self, _: Context, ready: Ready) {
         if let Some(shard) = ready.shard {
             // Note that array index 0 is 0-indexed, while index 1 is 1-indexed.
@@ -27,27 +31,29 @@ impl EventHandler for FinkBot {
             }
         }
     }
-
-    async fn message(&self, ctx: Context, msg: Message) {
-        debug!("{}", msg.content);
-    }
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Load environment variables from .env
-    dotenv::dotenv()?;
+    ctrlc::set_handler(|| {})?;
 
+    let max_level: tracing::Level;
+
+    // contains program configuration for debug-mode binary
     #[cfg(debug_assertions)]
-    let max_level = tracing::Level::DEBUG;
-    #[cfg(not(debug_assertions))]
-    let max_level = tracing::Level::INFO;
+    {
+        // Load environment variables from .env, only for development purposes
+        dotenv::dotenv()?;
+        max_level = tracing::Level::DEBUG;
+    }
 
-    tracing_subscriber::fmt()
-        .pretty()
-        .with_line_number(true)
-        .with_max_level(max_level)
-        .init();
+    // contains program configuration for release-mode binary
+    #[cfg(not(debug_assertions))]
+    {
+        max_level = tracing::Level::INFO;
+    }
+
+    tracing_subscriber::fmt().with_max_level(max_level).init();
 
     let database = sqlx::postgres::PgPoolOptions::new()
         .max_connections(5)
