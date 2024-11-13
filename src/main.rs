@@ -1,3 +1,5 @@
+#[allow(unused)] 
+
 use anyhow::Result;
 
 use poise::serenity_prelude as serenity;
@@ -5,16 +7,16 @@ use poise::serenity_prelude as serenity;
 use serenity::async_trait;
 use serenity::model::prelude::*;
 use serenity::prelude::*;
-use tracing::{debug, info};
+
+use tracing::{debug, info, warn};
 
 struct FinkBot {
-    db: sqlx::PgPool,
     prefix: String,
 }
 
 #[async_trait]
 impl EventHandler for FinkBot {
-    async fn message(&self, ctx: Context, msg: Message) {
+    async fn message(&self, _: Context, msg: Message) {
         debug!("{}", msg.content);
     }
 
@@ -37,43 +39,26 @@ impl EventHandler for FinkBot {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    ctrlc::set_handler(|| {})?;
+    // Program configuration
+    // load .env variables (todo: restrict to dev only)
+    dotenvy::dotenv()?;
+    // setup tracing logger
+    // setup_logging()?;
+    tracing_subscriber::fmt::init();
 
-    let max_level: tracing::Level;
 
-    // contains program configuration for debug-mode binary
-    #[cfg(debug_assertions)]
-    {
-        // Load environment variables from .env, only for development purposes
-        dotenv::dotenv()?;
-        max_level = tracing::Level::DEBUG;
-    }
-
-    // contains program configuration for release-mode binary
-    #[cfg(not(debug_assertions))]
-    {
-        max_level = tracing::Level::INFO;
-    }
-
-    tracing_subscriber::fmt().with_max_level(max_level).init();
-
-    let database = sqlx::postgres::PgPoolOptions::new()
-        .max_connections(5)
-        .connect(std::env::var("DATABASE_URL")?.as_str())
-        .await?;
 
     let prefix = std::env::var("DISCORD_PREFIX").unwrap_or(String::from("!"));
 
     let bot = FinkBot {
         prefix,
-        db: database,
     };
 
     // Configure the client with your Discord bot token in the environment.
     let token = std::env::var("DISCORD_TOKEN")?;
-    let intents = GatewayIntents::all();
+    let intents = GatewayIntents::non_privileged();
     let mut client = Client::builder(&token, intents).event_handler(bot).await?;
-    client.start().await.unwrap();
+    client.start().await?;
 
     Ok(())
 }
