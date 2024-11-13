@@ -13,3 +13,12 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 
 dotenvy = "0.15"
+
+# database
+[dependencies.diesel]
+version = "2.2.0"
+features = ["uuid", "chrono", "serde_json", "postgres_backend"]
+
+[dependencies.diesel-async]
+version = "0.5"
+features = ["postgres", "deadpool"]

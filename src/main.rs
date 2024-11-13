@@ -2,6 +2,7 @@
 
 use anyhow::Result;
 
+use database::PostgresPool;
 use poise::serenity_prelude as serenity;
 
 use serenity::async_trait;
@@ -10,7 +11,12 @@ use serenity::prelude::*;
 
 use tracing::{debug, info, warn};
 
+mod schema;
+
+mod database;
+
 struct FinkBot {
+    database: PostgresPool,
     prefix: String,
 }
 
@@ -46,11 +52,14 @@ async fn main() -> Result<()> {
     // setup_logging()?;
     tracing_subscriber::fmt::init();
 
+    let database_url = std::env::var("DATABASE_URL")?;
 
+    let pool = database::init_pool(database_url, 10)?;
 
     let prefix = std::env::var("DISCORD_PREFIX").unwrap_or(String::from("!"));
 
     let bot = FinkBot {
+        database: pool,
         prefix,
     };
 
