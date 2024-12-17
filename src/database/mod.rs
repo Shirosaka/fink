@@ -1,6 +1,5 @@
 //! # Database models and utilities
 
-use anyhow::Result;
 use diesel_async::{
     pooled_connection::{deadpool::Pool, AsyncDieselConnectionManager},
     AsyncPgConnection,
@@ -8,7 +7,7 @@ use diesel_async::{
 
 pub type PostgresPool = Pool<AsyncPgConnection>;
 
-pub fn init_pool(url: String, size: usize) -> Result<PostgresPool> {
+pub fn init_pool(url: String, size: usize) -> anyhow::Result<PostgresPool> {
     tracing::info!(url = ?url, "Connecting to database");
 
     let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(url);
